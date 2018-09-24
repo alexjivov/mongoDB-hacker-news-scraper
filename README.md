@@ -1,0 +1,2 @@
+# mongoDB-hacker-news-scraper
+App that scrapes the front page of Hacker News to get all the top ranking links as well as their metadata - such as the title, URL and the number of points/comments it received. This is one of many techniques to extract data from web pages using node.js and mainly uses a module called cheerio by Matthew Mueller which implements a subset of jQuery specifically designed for server use.
