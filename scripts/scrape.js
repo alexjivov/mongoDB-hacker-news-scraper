@@ -1,15 +1,7 @@
 // dependencies for cheerio to pull data from hacker news
 var request = require('request');
 var cheerio = require('cheerio');
-var mongoose = require("mongoose");
 
-// Get a reference to the mongoose schema
-var Schema = mongoose.Schema;
-
-// Create a new schema
-var newsSchema = new Schema ({
-
-})
 
 //Load the front page of Hacker News and displays its HTML code 
 // use the <span> and .comhead class to hook jQuery API onto top 30 articles and parse through them easily
