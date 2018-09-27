@@ -1,6 +1,30 @@
 // dependencies for cheerio to pull data from hacker news
 var request = require('request');
 var cheerio = require('cheerio');
+var axios = require("axios");
+var logger = require("morgan");
+
+// Require all models
+var Article = require("./models/Article");
+var Note = require("./models/Note");
+
+
+
+var PORT = 3000;
+
+// Initialize Express
+var app = express ();
+
+// Use morgan logger for loggin requests
+app.use(logger("dev"));
+// Use body-parser for handling form submissions
+app.use(bodyParser.urlencoded({ extended: true }));
+// Use express.static to serve the public folder as a static directory
+app.use(express.static("public"));
+
+//Mongo DB connection
+mongoose.connect("mongodb://localhost/news");
+
 
 
 //Load the front page of Hacker News and displays its HTML code 
