@@ -1,70 +1,69 @@
-// dependencies for cheerio to pull data from hacker news
-var request = require('request');
-var cheerio = require('cheerio');
-var axios = require("axios");
+//require dependencies
+var express = require('express')
+var bodyParser = require("body-parser");
+var mongoose = require("mongoose");
 var logger = require("morgan");
 
-// Require all models
-var Article = require("./models/Article");
-var Note = require("./models/Note");
+//require our Note and Article models
+var Note = require("./models/Note.js");
+var Article = require("./models/Article.js");
 
+var methodOverride = require("method-override");
 
+// Set mongoose to leverage built in JavaScript ES6 Promises
+mongoose.Promise = Promise;
 
-var PORT = 3000;
+//initialize express
+var app = express()
 
-// Initialize Express
-var app = express ();
+// Set up an Express Router
+var router = express.Router();
 
-// Use morgan logger for loggin requests
+// Require our routes file pass our router object
+require("./routes/routes")(router);
+
+// Use morgan and body parser with our app
 app.use(logger("dev"));
-// Use body-parser for handling form submissions
-app.use(bodyParser.urlencoded({ extended: true }));
-// Use express.static to serve the public folder as a static directory
+app.use(bodyParser.urlencoded({
+  extended: false
+}));
+
+// Make public a static dir
 app.use(express.static("public"));
 
-//Mongo DB connection
-mongoose.connect("mongodb://localhost/news");
+// Have every request go through our router middleware
+app.use(router);
+
+// Database configuration with mongoose
+// mongoose.connect("mongodb://localhost/mongo-news-scraper");
+//define local mongoDB URI
+if(process.env.MONGODB_URI){
+	//THIS EXECUTES IF THIS IS IN HEROKU
+	mongoose.connect(process.env.MONGODB_URI);
+}else {
+	mongoose.connect("mongodb://localhost/mongo-news-scraper")
+}
 
 
+var db = mongoose.connection;
 
-//Load the front page of Hacker News and displays its HTML code 
-// use the <span> and .comhead class to hook jQuery API onto top 30 articles and parse through them easily
-request('https://news.ycombinator.com', function (error, response, html) {
-    if (!error && response.statusCode == 200) { // only loads the html if there is no error code and status code is 200
-        var $ = cheerio.load(html);
-        //create array for results to load into
-        var parsedResults = [];
-        $ ('span.comhead').each(function(i, element) {
-            // Selects the previous element
-            var a = $(this).prev();
-            // Get rank by parsing the element two levels above the "a" element
-            var rank = a.parent().parent().text();
-            // Parses link title
-            var title = a.text();
-            // Parse href attribute from the "a" element
-            var url = a.attr('href');
-            // Get subtext children from the next row in the HTML table
-            var subtext = a.parent().parent().next().children('.subtext').children();
-            // Extract relevant data from children  
-            var points = $(subtext).eq(0).text();
-            var username = $(subtext).eq(1).text();
-            var comments = $(subtext).eq(2).text();
-            //Parsed meta data object
-            var metadata = {
-                rank: parseInt(rank),
-                title: title,
-                url: url,
-                points: parseInt(points),
-                username: username,
-                comments: parseInt(comments)
-            }
-           // Push meta-data into parsedResults array
-           parsedResults.push(metadata);
-            
-        });
-        //Log finished parse results in terminal
-        console.log(parsedResults);
-    }
+// Set Handlebars.
+var exphbs = require("express-handlebars");
+
+app.engine("handlebars", exphbs({ defaultLayout: "main" }));
+app.set("view engine", "handlebars");
+
+// Override with POST having ?_method=DELETE
+app.use(methodOverride("_method"));
+
+// Once logged in to the db through mongoose, log a success message
+db.once("open", function() {
+  console.log("Mongoose connection successful.");
 });
 
 
+
+// Listen on port 3000
+app.listen(process.env.PORT || 3000, function() {
+  console.log("App running on port 3000!");
+});
